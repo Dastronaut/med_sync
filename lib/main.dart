@@ -7,6 +7,7 @@ import 'package:med_sync/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:med_sync/features/auth/presentation/pages/sign_in_page.dart';
 import 'package:med_sync/features/welcome/presentation/bloc/welcome_bloc.dart';
 import 'package:med_sync/features/welcome/presentation/pages/welcome_screen.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 Future<void> initializeApp() async {
   final widgetsBinding = WidgetsFlutterBinding.ensureInitialized();
@@ -17,9 +18,19 @@ Future<void> initializeApp() async {
   FlutterNativeSplash.remove();
 }
 
-void main() {
-  initializeApp();
-  runApp(const MyApp(isFirstTime: true));
+Future<bool> isFirstTime() async {
+  final prefs = await SharedPreferences.getInstance();
+  final isFirstTime = prefs.getBool('is_first_time') ?? true;
+  if (isFirstTime) {
+    await prefs.setBool('is_first_time', false);
+  }
+  return isFirstTime;
+}
+
+void main() async {
+  await initializeApp();
+  final firstTime = await isFirstTime();
+  runApp(MyApp(isFirstTime: firstTime));
 }
 
 class MyApp extends StatelessWidget {
