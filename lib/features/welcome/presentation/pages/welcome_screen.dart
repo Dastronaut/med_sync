@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:med_sync/features/auth/presentation/pages/sign_in_page.dart';
+import 'package:go_router/go_router.dart';
 import 'package:med_sync/features/welcome/presentation/bloc/welcome_bloc.dart';
 import 'package:med_sync/features/welcome/presentation/bloc/welcome_event.dart';
 import 'package:med_sync/features/welcome/presentation/bloc/welcome_state.dart';
@@ -10,15 +10,43 @@ class WelcomeScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider(
-      create: (context) => WelcomeBloc(),
-      child: const WelcomeView(),
-    );
+    return const WelcomeView();
   }
 }
 
-class WelcomeView extends StatelessWidget {
+class WelcomeView extends StatefulWidget {
   const WelcomeView({super.key});
+
+  @override
+  State<WelcomeView> createState() => _WelcomeViewState();
+}
+
+class _WelcomeViewState extends State<WelcomeView> {
+  late PageController _pageController;
+
+  @override
+  void initState() {
+    super.initState();
+    _pageController = PageController(initialPage: 0);
+  }
+
+  @override
+  void dispose() {
+    _pageController.dispose();
+    super.dispose();
+  }
+
+  void _handleContinue(BuildContext context, WelcomeState state) {
+    if (state.currentPage < state.welcomeData.length - 1) {
+      _pageController.animateToPage(
+        state.currentPage + 1,
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeInOut,
+      );
+    } else {
+      context.go('/sign-in');
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -31,6 +59,7 @@ class WelcomeView extends StatelessWidget {
                 Expanded(
                   flex: 3,
                   child: PageView.builder(
+                    controller: _pageController,
                     onPageChanged: (value) {
                       context.read<WelcomeBloc>().add(UpdatePageIndex(value));
                     },
@@ -61,12 +90,15 @@ class WelcomeView extends StatelessWidget {
                         padding: const EdgeInsets.symmetric(horizontal: 20),
                         child: ElevatedButton(
                           onPressed: () {
-                            Navigator.pushReplacement(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => const SignInPage(),
-                              ),
-                            );
+                            if (state.currentPage < state.welcomeData.length - 1) {
+                              _pageController.animateToPage(
+                                state.currentPage + 1,
+                                duration: const Duration(milliseconds: 300),
+                                curve: Curves.easeInOut,
+                              );
+                            } else {
+                              context.go('/sign-in');
+                            }
                           },
                           style: ElevatedButton.styleFrom(
                             elevation: 0,
@@ -79,19 +111,26 @@ class WelcomeView extends StatelessWidget {
                               ),
                             ),
                           ),
-                          child: const Text("Continue"),
-                        ),
-                      ),
-                      TextButton(
-                        onPressed: () {},
-                        child: const Text(
-                          "Skip",
-                          style: TextStyle(
-                            color: Colors.grey,
-                            decoration: TextDecoration.underline,
+                          child: Text(
+                            state.currentPage < state.welcomeData.length - 1
+                                ? "Continue"
+                                : "Get Started",
                           ),
                         ),
                       ),
+                      const Spacer(),
+                      // TextButton(
+                      //   onPressed: () {
+                      //     context.go('/sign-in');
+                      //   },
+                      //   child: const Text(
+                      //     "Skip",
+                      //     style: TextStyle(
+                      //       color: Colors.grey,
+                      //       decoration: TextDecoration.underline,
+                      //     ),
+                      //   ),
+                      // ),
                       const Spacer(),
                     ],
                   ),
